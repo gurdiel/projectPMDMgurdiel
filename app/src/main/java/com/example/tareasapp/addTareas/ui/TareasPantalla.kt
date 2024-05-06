@@ -1,5 +1,7 @@
 package com.example.tareasapp.addTareas.ui
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -12,8 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -32,21 +36,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.tareasapp.R
 import com.example.tareasapp.addTareas.ui.model.TareaModel
 
 @Composable
 fun TareasPantalla(tareasViewModel: TareasViewModel) {
 
     val showDialogo: Boolean by tareasViewModel.showDialogo.observeAsState(false)//EN UN ESTADO?
+    val showAlert: Boolean by tareasViewModel.showAlert.observeAsState(false)
+    val showConfirmacion: Boolean by tareasViewModel.showConfirmacion.observeAsState(false)
     val lifacycle = LocalLifecycleOwner.current.lifecycle
 
     val uiState by produceState<TareaUiState>(
@@ -66,6 +76,7 @@ fun TareasPantalla(tareasViewModel: TareasViewModel) {
         }
 
         is TareaUiState.Success -> {
+
             Box(modifier = Modifier.fillMaxSize()) {
 
                 AddTareaDialogo(
@@ -78,25 +89,45 @@ fun TareasPantalla(tareasViewModel: TareasViewModel) {
                         .padding(24.dp),
                     tareasViewModel
                 )
-                TareasList((uiState as TareaUiState.Success).tareas, tareasViewModel)
+
+                btnDelete(
+                    (uiState as TareaUiState.Success).tareas,
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(24.dp),
+                    tareasViewModel
+                )
+                ClearDialogo(
+                    show = showAlert,
+                    onDismiss = { tareasViewModel.onAlertCerrar() },
+                    onClearAll = { tareasViewModel.onItemClear() }
+                )
+
+                TareasList((uiState as TareaUiState.Success).tareas, tareasViewModel, showConfirmacion)
             }
         }
     }
 }
 
+//onClearAll = { tareasViewModel.onItemClear() }
 @Composable
-fun TareasList(tareas: List<TareaModel>, tareasViewModel: TareasViewModel) {
+fun TareasList(tareas: List<TareaModel>, tareasViewModel: TareasViewModel, show: Boolean) {
 
     LazyColumn {
         items(tareas, key = { it.id }) {
-            ItemTarea(tareaModel = it, tareasViewModel = tareasViewModel)
+            ItemTarea(tareaModel = it, tareasViewModel = tareasViewModel, show = show)
         }
     }
 }
 
 @Composable
-fun ItemTarea(tareaModel: TareaModel, tareasViewModel: TareasViewModel) {
+fun ItemTarea(tareaModel: TareaModel, tareasViewModel: TareasViewModel, show: Boolean) {
 
+    DeleteDialogo(
+        show = show,
+        onDismiss = { tareasViewModel.onConfirmacionCerrar() },
+        onDeleteItem = { tareasViewModel.onItemEliminar(tareaModel) }
+    )
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -104,7 +135,7 @@ fun ItemTarea(tareaModel: TareaModel, tareasViewModel: TareasViewModel) {
             .pointerInput(Unit) {
                 detectTapGestures(
                     onLongPress = {
-                        tareasViewModel.onItemEliminar(tareaModel)
+                        tareasViewModel.onMostrarConfirmacionClick()
                     },
                     onDoubleTap = {
                         //Viajar a otra pantalla. Con el tareaModel y editarlo. MEJORA
@@ -134,8 +165,124 @@ fun Dialogo(modifier: Modifier, tareasViewModel: TareasViewModel) {
     }, modifier = modifier) {
         Icon(Icons.Filled.Add, contentDescription = "Añadir")
     }
+
 }
 
+@Composable
+fun btnDelete(tareas: List<TareaModel>, modifier: Modifier, tareasViewModel: TareasViewModel) {
+
+    if (tareas.isNotEmpty()) {
+        FloatingActionButton(
+            onClick = { tareasViewModel.onMostrarAlertClick() },
+            modifier = modifier
+        ) {
+            Icon(Icons.Filled.Delete, contentDescription = "Eliminar todo")
+        }
+    }
+}
+
+@Composable
+fun ClearDialogo(
+    show: Boolean,
+    onDismiss: () -> Unit,
+    onClearAll: () -> Unit
+) {
+    if (show) {
+        Dialog(onDismissRequest = { onDismiss() }) {
+
+            Column(
+                modifier = Modifier
+                    .background(Color.White)
+                    .padding(24.dp)
+                    .fillMaxWidth()
+            ) {
+                TituloDialogo(text = "¡Atención!")
+                Mensaje("¿Desea eliminar todo?", R.drawable.cubo_de_basura)
+                Spacer(modifier = Modifier.size(16.dp))
+                Button(
+                    onClick = { onClearAll() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Aceptar")
+                }
+                Button(
+                    onClick = { onDismiss() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Cancelar")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DeleteDialogo(
+    show: Boolean,
+    onDismiss: () -> Unit,
+    onDeleteItem: () -> Unit,
+
+) {
+    if (show) {
+        Dialog(onDismissRequest = { onDismiss() }) {
+
+            Column(
+                modifier = Modifier
+                    .background(Color.White)
+                    .padding(24.dp)
+                    .fillMaxWidth()
+            ) {
+                TituloDialogo(text = "¡Ojo!")
+                Mensaje("Va a eliminar un registro de la lista", R.drawable.cubo_de_basura)
+                Spacer(modifier = Modifier.size(16.dp))
+                Button(
+                    onClick = { onDeleteItem() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Aceptar")
+                }
+                Button(
+                    onClick = { onDismiss() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Cancelar")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun Mensaje(text: String, @DrawableRes drawable: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Image(
+            painter = painterResource(id = drawable),
+            contentDescription = "Eliminar",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .padding(8.dp)
+                .background(Color.Yellow)
+                .size(40.dp)
+                .clip(CircleShape)
+        )
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            modifier = Modifier.padding(10.dp)
+        )
+    }
+}
+
+@Composable
+fun TituloDialogo(text: String) {
+    Text(
+        text = text,
+        fontWeight = FontWeight.SemiBold,
+        color = Color.Red,
+        fontSize = 20.sp,
+        modifier = Modifier.padding(bottom = 10.dp)
+    )
+}
 
 @Composable
 fun AddTareaDialogo(show: Boolean, onDismiss: () -> Unit, onTareaAdd: (String) -> Unit) {

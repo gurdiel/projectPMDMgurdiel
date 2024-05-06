@@ -21,4 +21,7 @@ interface TareaDao {
 
     @Delete
     suspend fun deleteTarea(item: TareaEntity)
+
+    @Query("DELETE FROM TareaEntity")
+    suspend fun deleteAll()
 }

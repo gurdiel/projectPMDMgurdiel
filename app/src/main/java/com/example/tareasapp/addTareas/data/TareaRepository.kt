@@ -28,6 +28,14 @@ class TareaRepository @Inject constructor(private val tareaDao: TareaDao) {
     suspend fun delete(tareaModel: TareaModel){
         tareaDao.deleteTarea(tareaModel.toData())
     }
+
+    /**
+     * Eliminamos toda las entradas de la tabla.
+     */
+    suspend fun deleteAll(){
+        tareaDao.deleteAll()
+    }
+
 }
 
 fun TareaModel.toData():TareaEntity{

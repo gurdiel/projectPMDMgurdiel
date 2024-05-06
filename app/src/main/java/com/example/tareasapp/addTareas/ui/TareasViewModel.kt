@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tareasapp.addTareas.domain.AddTareaUseCase
+import com.example.tareasapp.addTareas.domain.DeleteAllUseCase
 import com.example.tareasapp.addTareas.domain.DeleteTareaUseCase
 import com.example.tareasapp.addTareas.domain.GetTareasUseCase
 import com.example.tareasapp.addTareas.domain.UpdateTareaUseCase
@@ -26,18 +27,33 @@ class TareasViewModel @Inject constructor(
     private val addTareaUseCase: AddTareaUseCase,
     private val updateTareaUseCase: UpdateTareaUseCase,
     private val deleteTareaUseCase: DeleteTareaUseCase,
+    private val deleteAllUseCase: DeleteAllUseCase,
     getTareaUseCase: GetTareasUseCase
-): ViewModel() {
+) : ViewModel() {
 
-    val uiState:StateFlow<TareaUiState> = getTareaUseCase().map (::Success )
+    val uiState: StateFlow<TareaUiState> = getTareaUseCase().map(::Success)
         .catch { TareaUiState.Error(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TareaUiState.Loading)
 
     private val _showDialogo = MutableLiveData<Boolean>()
-    val showDialogo:LiveData<Boolean> = _showDialogo
+    val showDialogo: LiveData<Boolean> = _showDialogo
+
+    private val _showAlert = MutableLiveData<Boolean>()
+    val showAlert: LiveData<Boolean> = _showAlert
+
+    private val _showConfirmacion = MutableLiveData<Boolean>()
+    val showConfirmacion: LiveData<Boolean> = _showConfirmacion
 
     fun onDialogoCerrar() {
         _showDialogo.value = false
+    }
+
+    fun onAlertCerrar() {
+        _showAlert.value = false
+    }
+
+    fun onConfirmacionCerrar(){
+        _showConfirmacion.value = false
     }
 
     fun onTareaCreated(tarea: String) {
@@ -51,19 +67,33 @@ class TareasViewModel @Inject constructor(
         _showDialogo.value = true
     }
 
+    fun onMostrarAlertClick() {
+        _showAlert.value = true
+    }
+
+    fun onMostrarConfirmacionClick(){
+        _showConfirmacion.value = true
+    }
+
     fun onCheckBoxSelected(tareaModel: TareaModel) {
 
         viewModelScope.launch {
             updateTareaUseCase(tareaModel.copy(selected = !tareaModel.selected))
         }
-
-
-
     }
 
     fun onItemEliminar(tareaModel: TareaModel) {
+
+        _showConfirmacion.value = false
         viewModelScope.launch {
             deleteTareaUseCase(tareaModel)
+        }
+    }
+
+    fun onItemClear() {
+        _showAlert.value = false
+        viewModelScope.launch {
+            deleteAllUseCase()
         }
     }
 
