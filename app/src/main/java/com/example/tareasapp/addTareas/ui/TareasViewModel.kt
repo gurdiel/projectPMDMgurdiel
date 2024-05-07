@@ -28,11 +28,16 @@ class TareasViewModel @Inject constructor(
     private val updateTareaUseCase: UpdateTareaUseCase,
     private val deleteTareaUseCase: DeleteTareaUseCase,
     private val deleteAllUseCase: DeleteAllUseCase,
+    //No es privado porque lo voy a llamar desde la variable de StateFlow
     getTareaUseCase: GetTareasUseCase
 ) : ViewModel() {
-
+    //Creamos un stateFlow de la sealed Interface.
+    //Consume el caso de uso que le da el listado.
+    //Recoge error
     val uiState: StateFlow<TareaUiState> = getTareaUseCase().map(::Success)
         .catch { TareaUiState.Error(it) }
+        //Espera un tiempo que indicamos en milisegundos para esperar en segundo plano
+        //Y cuando pase ese tiempo bloquea el flow. Y el estado inicial es Loading. Saldrá cargando.
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TareaUiState.Loading)
 
     private val _showDialogo = MutableLiveData<Boolean>()
@@ -82,7 +87,6 @@ class TareasViewModel @Inject constructor(
     }
 
     fun onItemEliminar(tareaModel: TareaModel) {
-
         _showConfirmacion.value = false
         viewModelScope.launch {
             deleteTareaUseCase(tareaModel)
@@ -97,6 +101,6 @@ class TareasViewModel @Inject constructor(
     }
 
     fun onItemEditar(tareaModel: TareaModel) {
-        //MEJORA
+        //MEJORA, quedo pdte. por falta de tiempo.
     }
 }

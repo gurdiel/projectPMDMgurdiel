@@ -74,7 +74,7 @@ fun TareasPantalla(tareasViewModel: TareasViewModel) {
     }
 
     when (uiState) {
-        is TareaUiState.Error -> {}
+        is TareaUiState.Error -> { }//Programando un estado de error
         TareaUiState.Loading -> {
             CircularProgressIndicator()
         }

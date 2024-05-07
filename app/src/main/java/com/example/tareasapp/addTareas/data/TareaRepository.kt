@@ -38,6 +38,7 @@ class TareaRepository @Inject constructor(private val tareaDao: TareaDao) {
 
 }
 
+//Función de extension
 fun TareaModel.toData():TareaEntity{
     return TareaEntity(this.id,this.tarea,this.selected)
 }
