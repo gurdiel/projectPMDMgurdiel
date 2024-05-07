@@ -76,7 +76,6 @@ class TareasViewModel @Inject constructor(
     }
 
     fun onCheckBoxSelected(tareaModel: TareaModel) {
-
         viewModelScope.launch {
             updateTareaUseCase(tareaModel.copy(selected = !tareaModel.selected))
         }

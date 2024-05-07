@@ -1,5 +1,6 @@
 package com.example.tareasapp.addTareas.ui
 
+import android.annotation.SuppressLint
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,8 +24,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -51,6 +54,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.tareasapp.R
 import com.example.tareasapp.addTareas.ui.model.TareaModel
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun TareasPantalla(tareasViewModel: TareasViewModel) {
 
@@ -76,40 +80,44 @@ fun TareasPantalla(tareasViewModel: TareasViewModel) {
         }
 
         is TareaUiState.Success -> {
+            Scaffold(
+                floatingActionButton = {
+                    BtnsActionFloating((uiState as TareaUiState.Success).tareas, tareasViewModel)
+                },
+                floatingActionButtonPosition = FabPosition.Center
+            ) { contentPadding ->
+                Box(modifier = Modifier.fillMaxSize()) {
 
-            Box(modifier = Modifier.fillMaxSize()) {
+                    AddTareaDialogo(
+                        showDialogo,
+                        onDismiss = { tareasViewModel.onDialogoCerrar() },
+                        onTareaAdd = { tareasViewModel.onTareaCreated(it) })
 
-                AddTareaDialogo(
-                    showDialogo,
-                    onDismiss = { tareasViewModel.onDialogoCerrar() },
-                    onTareaAdd = { tareasViewModel.onTareaCreated(it) })
-                Dialogo(
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(24.dp),
-                    tareasViewModel
-                )
-
-                btnDelete(
-                    (uiState as TareaUiState.Success).tareas,
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(24.dp),
-                    tareasViewModel
-                )
-                ClearDialogo(
-                    show = showAlert,
-                    onDismiss = { tareasViewModel.onAlertCerrar() },
-                    onClearAll = { tareasViewModel.onItemClear() }
-                )
-
-                TareasList((uiState as TareaUiState.Success).tareas, tareasViewModel, showConfirmacion)
+                    ClearDialogo(
+                        show = showAlert,
+                        onDismiss = { tareasViewModel.onAlertCerrar() },
+                        onClearAll = { tareasViewModel.onItemClear() }
+                    )
+                    TareasList(
+                        (uiState as TareaUiState.Success).tareas,
+                        tareasViewModel,
+                        showConfirmacion
+                    )
+                }
             }
         }
     }
 }
 
-//onClearAll = { tareasViewModel.onItemClear() }
+@Composable
+fun BtnsActionFloating(tareas: List<TareaModel>, tareasViewModel: TareasViewModel) {
+
+    Row() {
+        BtnDelete(tareas, tareasViewModel)
+        Dialogo(tareasViewModel = tareasViewModel)
+    }
+}
+
 @Composable
 fun TareasList(tareas: List<TareaModel>, tareasViewModel: TareasViewModel, show: Boolean) {
 
@@ -158,23 +166,24 @@ fun ItemTarea(tareaModel: TareaModel, tareasViewModel: TareasViewModel, show: Bo
 }
 
 @Composable
-fun Dialogo(modifier: Modifier, tareasViewModel: TareasViewModel) {
+fun Dialogo(tareasViewModel: TareasViewModel) {
 
-    FloatingActionButton(onClick = {
-        tareasViewModel.onMostrarDialogoClick()
-    }, modifier = modifier) {
+    FloatingActionButton(
+        onClick = { tareasViewModel.onMostrarDialogoClick() },
+        containerColor = Color.Green
+    ) {
         Icon(Icons.Filled.Add, contentDescription = "Añadir")
     }
 
 }
 
 @Composable
-fun btnDelete(tareas: List<TareaModel>, modifier: Modifier, tareasViewModel: TareasViewModel) {
+fun BtnDelete(tareas: List<TareaModel>, tareasViewModel: TareasViewModel) {
 
     if (tareas.isNotEmpty()) {
         FloatingActionButton(
             onClick = { tareasViewModel.onMostrarAlertClick() },
-            modifier = modifier
+            contentColor = Color.Red
         ) {
             Icon(Icons.Filled.Delete, contentDescription = "Eliminar todo")
         }
@@ -222,7 +231,7 @@ fun DeleteDialogo(
     onDismiss: () -> Unit,
     onDeleteItem: () -> Unit,
 
-) {
+    ) {
     if (show) {
         Dialog(onDismissRequest = { onDismiss() }) {
 
@@ -283,6 +292,7 @@ fun TituloDialogo(text: String) {
         modifier = Modifier.padding(bottom = 10.dp)
     )
 }
+
 
 @Composable
 fun AddTareaDialogo(show: Boolean, onDismiss: () -> Unit, onTareaAdd: (String) -> Unit) {
