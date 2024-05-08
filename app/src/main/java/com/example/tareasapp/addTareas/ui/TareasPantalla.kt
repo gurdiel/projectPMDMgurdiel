@@ -146,7 +146,7 @@ fun ItemTarea(tareaModel: TareaModel, tareasViewModel: TareasViewModel, show: Bo
                         tareasViewModel.onMostrarConfirmacionClick()
                     },
                     onDoubleTap = {
-                        //Viajar a otra pantalla. Con el tareaModel y editarlo. MEJORA
+                        //Viajar a otra pantalla. Con el tareaModel y editarlo.
                     })
             },
         elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
